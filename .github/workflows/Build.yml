@@ -1,17 +1,8 @@
 name: Build modules
 
 on:
-  push:
-    paths-ignore:
-      - "**/*.md"
-      - '**/*.txt'
-  pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - '**/*.txt'
   workflow_dispatch:
 
-# for release create
 permissions:
   contents: write
 
@@ -22,29 +13,31 @@ concurrency:
 jobs:
   build_prx:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     env:
       zip: '${{ github.workspace }}/plugins.zip'
       zip_glob_path: 'bin/plugins/prx'
       zip_glob: '*.prx'
       build_tag: 'build_${{ github.run_number }}'
       hen_path: hen
-    steps:
 
+    steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive
 
     - name: Checkout hen
-      uses: actions/checkout@main
+      uses: actions/checkout@v4
       with:
         path: ${{ env.hen_path }}
-        repository: Scene-Collective/ps4-hen
+        repository: MexrlDev/PS4-Hen
 
     - name: Setup variables
       run: |
-        sudo apt install llvm lld
+        sudo apt install -y llvm lld unzip p7zip-full
         echo "commit_ver=1.$(git rev-list HEAD --count)" >> $GITHUB_ENV
         echo "commit_hash=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_ENV
 
@@ -81,8 +74,7 @@ jobs:
         build_command: bash build.sh
 
     - name: Upload plugins
-      if: github.event_name != 'push'
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: plugins-${{ env.build_tag }}
         path: |
@@ -90,14 +82,22 @@ jobs:
           ${{ github.workspace }}/LICENSE
 
     - name: Upload HEN with built plugins
-      if: github.event_name != 'push'
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: hen-plugins-${{ env.build_tag }}
         path: ${{ env.hen_path }}/hen.bin
 
-    - name: Release
-      if: github.event_name != 'pull_request'
+    - name: Create release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh release create ${{ env.build_tag }} ${{ env.zip }} ${{ env.hen_path }}/hen.bin --target ${{ github.sha }} -t "${{ env.build_tag }}" -p --generate-notes
+      run: gh release create ${{ env.build_tag }} --target ${{ github.sha }} -t "${{ env.build_tag }}" -p --generate-notes
+
+    - name: Upload plugins.zip to release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh release upload ${{ env.build_tag }} ${{ env.zip }}
+
+    - name: Upload hen.bin to release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh release upload ${{ env.build_tag }} ${{ env.hen_path }}/hen.bin

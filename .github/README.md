@@ -2,7 +2,7 @@
 * Plugins for [ps4-hen 2.2.1 Beta](https://github.com/MexrlDev/PS4-Hen)
 
 ## Improvemnts 
-* Added Build.yml
+* Added Build.yml to build my [PS4HEN](https://github.com/MexrlDev/PS4-Hen)
 * more coming soon…
 
 # Plugins

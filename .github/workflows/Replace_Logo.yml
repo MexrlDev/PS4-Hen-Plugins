@@ -1,0 +1,106 @@
+name: Replace HEN Settings Icon
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: "Image name (without extension)"
+        required: true
+        type: string
+
+      image_extension:
+        description: "Image extension (for example: png, PNG, png.PNG)"
+        required: true
+        type: string
+
+      remove_old:
+        description: "Enter Y to remove the old image after successful replacement"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  replace-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Replace image
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          IMAGE_EXTENSION: ${{ inputs.image_extension }}
+          REMOVE_OLD: ${{ inputs.remove_old }}
+        run: |
+          set -e
+
+          SOURCE="plugin_mono/data/${IMAGE_NAME}.${IMAGE_EXTENSION}"
+          TARGET="plugin_mono/data/hen_settings_icon.png"
+
+          echo "Source: $SOURCE"
+          echo "Target: $TARGET"
+
+          if [ ! -f "$SOURCE" ]; then
+            echo "ERROR: Source image does not exist:"
+            echo "$SOURCE"
+            exit 1
+          fi
+
+          # Prevent accidentally copying the target onto itself.
+          if [ "$SOURCE" = "$TARGET" ]; then
+            echo "ERROR: Source and target are the same file."
+            exit 1
+          fi
+
+          # Create/replace the target.
+          cp "$SOURCE" "$TARGET"
+
+          echo ""
+          echo "Replacement created successfully."
+
+          echo ""
+          echo "SHA-256:"
+          SOURCE_HASH=$(sha256sum "$SOURCE" | awk '{print $1}')
+          TARGET_HASH=$(sha256sum "$TARGET" | awk '{print $1}')
+
+          echo "Source: $SOURCE_HASH"
+          echo "Target: $TARGET_HASH"
+
+          # Verify that the replacement is identical.
+          if [ "$SOURCE_HASH" != "$TARGET_HASH" ]; then
+            echo "ERROR: Verification failed."
+            exit 1
+          fi
+
+          echo ""
+          echo "Image replacement verified."
+
+          # Remove source only when Y was entered.
+          if [ "$REMOVE_OLD" = "Y" ] || [ "$REMOVE_OLD" = "y" ]; then
+            echo ""
+            echo "Removing old image: $SOURCE"
+            rm "$SOURCE"
+            echo "Old image removed."
+          else
+            echo ""
+            echo "Old image kept."
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A plugin_mono/data/
+
+          if git diff --cached --quiet; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          git commit -m "Replace HEN settings icon"
+          git push

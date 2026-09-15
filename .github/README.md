@@ -1,6 +1,9 @@
-# ps4-hen-plugins
+# PS4 Hen Plugins
+* Plugin system for Updated PS4 Homebrew Enabler [ps4-hen 2.2.1 Beta](https://github.com/MexrlDev/PS4-Hen)
 
-Plugin system for Updated PS4 Homebrew Enabler [ps4-hen](https://github.com/Scene-Collective/ps4-hen).
+## Improvemnts 
+* Added Build.yml
+* more coming soon…
 
 # Plugins
 

@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       image_name:
-        description: "Image name (without extension)"
+        description: "Image name without extension (example: Rockhen)"
         required: true
         type: string
 
       image_extension:
-        description: "Image extension (for example: png, PNG, png.PNG)"
+        description: "Extension (example: png.PNG)"
         required: true
         type: string
 
       remove_old:
-        description: "Enter Y to remove the old image after successful replacement"
+        description: "Enter Y to remove the source image after successful replacement. Leave empty to keep it."
         required: false
         default: ""
         type: string
@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Replace image
         env:
@@ -41,12 +41,19 @@ jobs:
           SOURCE="plugin_mono/data/${IMAGE_NAME}.${IMAGE_EXTENSION}"
           TARGET="plugin_mono/data/hen_settings_icon.png"
 
+          echo "======================================"
+          echo "Image replacement"
+          echo "======================================"
           echo "Source: $SOURCE"
           echo "Target: $TARGET"
+          echo ""
 
+          # Make sure the source exists.
           if [ ! -f "$SOURCE" ]; then
             echo "ERROR: Source image does not exist:"
             echo "$SOURCE"
+            echo ""
+            echo "Check the image name and extension."
             exit 1
           fi
 
@@ -59,39 +66,53 @@ jobs:
           # Create/replace the target.
           cp "$SOURCE" "$TARGET"
 
+          echo "Replacement copied successfully."
           echo ""
-          echo "Replacement created successfully."
 
-          echo ""
-          echo "SHA-256:"
+          # Calculate hashes.
           SOURCE_HASH=$(sha256sum "$SOURCE" | awk '{print $1}')
           TARGET_HASH=$(sha256sum "$TARGET" | awk '{print $1}')
 
-          echo "Source: $SOURCE_HASH"
-          echo "Target: $TARGET_HASH"
+          echo "Source SHA-256:"
+          echo "$SOURCE_HASH"
+          echo ""
 
-          # Verify that the replacement is identical.
+          echo "Target SHA-256:"
+          echo "$TARGET_HASH"
+          echo ""
+
+          # Verify the target is an exact copy.
           if [ "$SOURCE_HASH" != "$TARGET_HASH" ]; then
             echo "ERROR: Verification failed."
+            echo "The source and target files are different."
             exit 1
           fi
 
+          echo "SUCCESS: Image replacement verified."
           echo ""
-          echo "Image replacement verified."
 
-          # Remove source only when Y was entered.
+          # Remove the source only when Y/y was entered.
           if [ "$REMOVE_OLD" = "Y" ] || [ "$REMOVE_OLD" = "y" ]; then
-            echo ""
-            echo "Removing old image: $SOURCE"
+            echo "Remove old image: YES"
+            echo "Removing: $SOURCE"
+
             rm "$SOURCE"
-            echo "Old image removed."
+
+            if [ -f "$SOURCE" ]; then
+              echo "ERROR: Failed to remove source image."
+              exit 1
+            fi
+
+            echo "Source image removed successfully."
           else
-            echo ""
-            echo "Old image kept."
+            echo "Remove old image: NO"
+            echo "Source image will be kept."
           fi
 
       - name: Commit changes
         run: |
+          set -e
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 

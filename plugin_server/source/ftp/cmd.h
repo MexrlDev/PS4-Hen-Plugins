@@ -1,8 +1,18 @@
 /* Copyright (C) 2023 John Törnblom
- * Copyright (C) 2026 PurpyHen contributors
- *
- * GPLv3 or later.
- */
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; see the file COPYING. If not, see
+<http://www.gnu.org/licenses/>.  */
 
 #pragma once
 
@@ -11,6 +21,9 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+/**
+ * Data structure that captures the current state of a client.
+ **/
 typedef struct ftp_env
 {
     int data_fd;
@@ -22,14 +35,16 @@ typedef struct ftp_env
     off_t data_offset;
     char rename_path[PATH_MAX];
     struct sockaddr_in data_addr;
-
-    /* NEW: config snapshot so we don't re-parse hen.ini per command */
-    int show_title_id;
 } ftp_env_t;
 
+/**
+ * Callback function prototype for ftp commands.
+ **/
 typedef int(ftp_command_fn_t)(ftp_env_t* env, const char* arg);
 
-/* Standard FTP commands */
+/**
+ * Standard FTP commands.
+ **/
 int ftp_cmd_APPE(ftp_env_t* env, const char* arg);
 int ftp_cmd_CDUP(ftp_env_t* env, const char* arg);
 int ftp_cmd_CWD(ftp_env_t* env, const char* arg);
@@ -52,12 +67,15 @@ int ftp_cmd_SYST(ftp_env_t* env, const char* arg);
 int ftp_cmd_TYPE(ftp_env_t* env, const char* arg);
 int ftp_cmd_USER(ftp_env_t* env, const char* arg);
 
-/* Custom FTP commands */
+/**
+ * Custom FTP commands.
+ **/
 int ftp_cmd_KILL(ftp_env_t* env, const char* arg);
 int ftp_cmd_MTRW(ftp_env_t* env, const char* arg);
 int ftp_cmd_CHMOD(ftp_env_t* env, const char* arg);
-int ftp_cmd_PKGS(ftp_env_t* env, const char* arg);   /* NEW: SITE PKGS */
 
-/* Errors */
+/**
+ * Error responses to unknown/unavailable FTP commands.
+ **/
 int ftp_cmd_unavailable(ftp_env_t* env, const char* arg);
 int ftp_cmd_unknown(ftp_env_t* env, const char* arg);

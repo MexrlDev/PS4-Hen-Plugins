@@ -20,7 +20,6 @@ extern "C"
 #include "mono.h"
 
 #include "patches.h"
-#include "pkg_browser.h"   /* <-- NEW */
 
 #include "hen_settings_icon.inc.c"
 #include "hen_settings.inc.c"
@@ -117,9 +116,13 @@ static void PatchDebugSettings(void)
     static const uint8_t m[] = {0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3};
     const int pid = getpid();
     if (sceKernelGetUtokenStoreModeForRcmgr)
+    {
         sys_proc_rw(pid, sceKernelGetUtokenStoreModeForRcmgr, m, sizeof(m), 1);
+    }
     if (sceKernelGetDebugMenuModeForRcmgr)
+    {
         sys_proc_rw(pid, sceKernelGetDebugMenuModeForRcmgr, m, sizeof(m), 1);
+    }
 }
 
 static void RunPost(const int app_exe)
@@ -148,7 +151,9 @@ static void RunPost(const int app_exe)
     uintptr_t sceKernelGetHwSerialNumber = 0;
     sceKernelDlsym(0x2001, "sceKernelGetHwSerialNumber", (void**)&sceKernelGetHwSerialNumber);
     if (sceKernelGetHwSerialNumber)
+    {
         WriteJump64(sceKernelGetHwSerialNumber, (uintptr_t)sceKernelGetHwSerialNumber_hook);
+    }
     UploadDebugSettingsPatch();
 }
 
@@ -215,10 +220,6 @@ attr_public int plugin_load(struct SceEntry* args)
     mkdir(USER_PLUGIN_PATH, 0777);
     write_file(SHELLUI_HEN_SETTINGS, data_hen_settings_xml, data_hen_settings_xml_len);
     write_file(SHELLUI_HEN_SETTINGS_ICON_PATH, data_hen_settings_icon_png, data_hen_settings_icon_png_len);
-
-    /* NEW in PurpyHen 3.0.0: scan USB for PKGs and generate the page */
-    PkgBrowser_Init();
-
     printf("====\n\nHello from mono module\n\n====\n");
     if (0 && file_exists_temp(g_pluginName) == 0)
     {

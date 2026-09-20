@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<system_settings version="1.0" plugin="settings_root_plugin">
+  <setting_list id="pkginstaller_all_usb" title="★ USB PKGs Found (0)">
+    <button id="pkg_none" title="No PKGs found"
+            description="Insert a USB drive with .pkg files and reopen this page."/>
+  </setting_list>
+</system_settings>
